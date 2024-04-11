@@ -9,6 +9,7 @@ STORAGE_PROVIDER=${STORAGE_PROVIDER:-"onedrive"}
 STORAGE_BACKUP_PATH=${STORAGE_BACKUP_PATH:-"/storages/backups/databases/k3s-common-db"}
 REMOTE_BACKUP_PATH=${STORAGE_PROVIDER}:${STORAGE_BACKUP_PATH}
 BACKUP_NUMBER_LIMIT=${BACKUP_NUMBER_LIMIT:-30}
+RCLONE_CONFIG=${RCLONE_CONFIG:-"/workspace/rclone.conf"}
 
 function backup() {
     set -ev
@@ -58,6 +59,7 @@ Environment:
     STORAGE_PROVIDER: Rclone 存储提供商，默认为 onedrive
     STORAGE_BACKUP_PATH: Rclone 远程备份存储路径，默认为 /storages/backups/databases/k3s-common-db
     BACKUP_NUMBER_LIMIT: 备份文件数量限制，默认为 30
+    RCLONE_CONFIG: Rclone 配置文件路径，默认为 /workspace/rclone.conf
 EOF
 }
 
