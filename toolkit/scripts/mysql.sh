@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-USERNAME=${USERNAME:-"root"}
-PASSWORD=${PASSWORD:-"root"}
-HOST=${HOST:-"mysql-headless.default.svc.cluster.local"}
+MYSQL_ROOT_USER=${MYSQL_ROOT_USER:-"root"}
+MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-"root"}
+MYSQL_MASTER_HOST=${MYSQL_MASTER_HOST:-"mysql-headless.default.svc.cluster.local"}
 DATE=$(date +"%Y%m%d")
 BASE_NAME=${BASE_NAME:-"mysql-backup"}
 STORAGE_PROVIDER=${STORAGE_PROVIDER:-"onedrive"}
@@ -12,10 +12,10 @@ BACKUP_NUMBER_LIMIT=${BACKUP_NUMBER_LIMIT:-30}
 
 function backup() {
     local TEMPDIR=$(mktemp -d)
-    local db_names=$(mysql -e "show databases;" -u${USERNAME} -p${PASSWORD} -h ${HOST} | grep -Ev "Database|information_schema|performance_schema|mysql|sys")
+    local db_names=$(mysql -e "show databases;" -u${MYSQL_ROOT_USER} -p${MYSQL_ROOT_PASSWORD} -h ${MYSQL_MASTER_HOST} | grep -Ev "Database|information_schema|performance_schema|mysql|sys")
     for db in $db_names; do
         echo "Backing up $db database"
-        mysqldump -u${USERNAME} -p${PASSWORD} -h ${HOST} --triggers --routines --events --databases $db > ${TEMPDIR}/${db}.sql
+        mysqldump -u${MYSQL_ROOT_USER} -p${MYSQL_ROOT_PASSWORD} -h ${MYSQL_MASTER_HOST} --triggers --routines --events --databases $db > ${TEMPDIR}/${db}.sql
     done
     tar -czf ${BASE_NAME}-${DATE}.tar.gz -C ${TEMPDIR} .
     tar -czf ${BASE_NAME}-latest.tar.gz -C ${TEMPDIR} .
@@ -33,7 +33,7 @@ function restore() {
     mkdir ${TEMPDIR}/data
     tar -xzf ${TEMPDIR}/${FILE_NAME} -C ${TEMPDIR}/data
     for db in $(ls ${TEMPDIR}/data); do
-        mysql -u${USERNAME} -p${PASSWORD} -h ${HOST} < ${TEMPDIR}/${db}
+        mysql -u${MYSQL_ROOT_USER} -p${MYSQL_ROOT_PASSWORD} -h ${MYSQL_MASTER_HOST} < ${TEMPDIR}/${db}
     done
     rm -rf ${TEMPDIR}
 }
@@ -47,9 +47,9 @@ Options:
     restore <date>: 恢复数据库, date 为备份日期, 格式为 %Y%m%d，默认值为 latest
 
 Environment:
-    USERNAME: mysql 用户名，默认为 root
-    PASSWORD: mysql 密码，若为 root 请留空
-    HOST: mysql 地址，默认为 mysql-headless.default.svc.cluster.local
+    MYSQL_ROOT_USER: mysql 用户名，默认为 root
+    MYSQL_ROOT_PASSWORD: mysql 密码，若为 root 请留空
+    MYSQL_MASTER_HOST: mysql 地址，默认为 mysql-headless.default.svc.cluster.local
     BASE_NAME: 备份文件名，默认为 mysql-backup
     STORAGE_PROVIDER: Rclone 存储提供商，默认为 onedrive
     STORAGE_BACKUP_PATH: Rclone 远程备份存储路径，默认为 /storages/backups/databases/k3s-common-db
