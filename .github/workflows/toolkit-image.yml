@@ -24,7 +24,7 @@ on:
 env:
   TZ: Asia/Shanghai
   APP_NAME: ${{ inputs.app_name }}
-  DOCKERHUB_REPO: ${{ inputs.username }}/${{ env.app_name }}
+  DOCKERHUB_REPO: ${{ inputs.username }}/${{ inputs.app_name }}
   APP_VERSION: ${{ inputs.version }}
 
 jobs:
