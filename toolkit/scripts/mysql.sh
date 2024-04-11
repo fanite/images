@@ -11,6 +11,7 @@ REMOTE_BACKUP_PATH=${STORAGE_PROVIDER}:${STORAGE_BACKUP_PATH}
 BACKUP_NUMBER_LIMIT=${BACKUP_NUMBER_LIMIT:-30}
 
 function backup() {
+    set -ev
     local TEMPDIR=$(mktemp -d)
     local db_names=$(mysql -e "show databases;" -u${MYSQL_ROOT_USER} -p${MYSQL_ROOT_PASSWORD} -h ${MYSQL_MASTER_HOST} | grep -Ev "Database|information_schema|performance_schema|mysql|sys")
     for db in $db_names; do
@@ -22,9 +23,11 @@ function backup() {
     rclone ls ${REMOTE_BACKUP_PATH}/ | awk '{print $2}' | sort -r | tail -n +$(($BACKUP_NUMBER_LIMIT + 1)) | xargs -i -t rclone delete ${REMOTE_BACKUP_PATH}/{}
     echo "${BASE_NAME}-${DATE}.tar.gz ${BASE_NAME}-latest.tar.gz" | xargs -n 1 echo | xargs -i -t rclone copy ${TEMPDIR}/{} ${REMOTE_BACKUP_PATH}/
     rm -rf ${TEMPDIR}
+    set +ev
 }
 
 function restore() {
+    set -ev
     local FILE_DATE=${2:-"latest"}
     local FILE_NAME=${BASE_NAME}-${FILE_DATE}.tar.gz
     local REMOTE_FILE_PATH=${REMOTE_BACKUP_PATH}/${FILE_NAME}
@@ -33,9 +36,10 @@ function restore() {
     mkdir ${TEMPDIR}/data
     tar -xzf ${TEMPDIR}/${FILE_NAME} -C ${TEMPDIR}/data
     for db in $(ls ${TEMPDIR}/data); do
-        mysql -u${MYSQL_ROOT_USER} -p${MYSQL_ROOT_PASSWORD} -h ${MYSQL_MASTER_HOST} < ${TEMPDIR}/${db}
+        mysql -u${MYSQL_ROOT_USER} -p${MYSQL_ROOT_PASSWORD} -h ${MYSQL_MASTER_HOST} < ${TEMPDIR}/data/${db}
     done
     rm -rf ${TEMPDIR}
+    set +ev
 }
 
 function usage() {
