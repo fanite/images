@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 MYSQL_ROOT_USER=${MYSQL_ROOT_USER:-"root"}
 MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-"root"}
