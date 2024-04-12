@@ -3,7 +3,7 @@
 export MYSQL_USER=${MYSQL_USER:-"fanite"}
 export MYSQL_ROOT_USER=${MYSQL_ROOT_USER:-"root"}
 export MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-"root"}
-export MYSQL_MASTER_HOST=${MYSQL_MASTER_HOST:-"mysql-headless.default.svc.cluster.local"}
+export MYSQL_HOST=${MYSQL_HOST:-"mysql-headless.default.svc.cluster.local"}
 export BASE_NAME=${BASE_NAME:-"mysql-backup"}
 export STORAGE_PROVIDER=${STORAGE_PROVIDER:-"onedrive"}
 export STORAGE_BACKUP_PATH=${STORAGE_BACKUP_PATH:-"/storages/backups/databases/k3s-common-db"}
@@ -25,10 +25,10 @@ fi
 
 function backup() {
     local TEMPDIR=$(mktemp -d)
-    local db_names=$(mysql -e "show databases;" -u${MYSQL_ROOT_USER} -p${MYSQL_ROOT_PASSWORD} -h ${MYSQL_MASTER_HOST} | grep -Ev "Database|information_schema|performance_schema|mysql|sys")
+    local db_names=$(mysql -e "show databases;" -u${MYSQL_ROOT_USER} -p${MYSQL_ROOT_PASSWORD} -h ${MYSQL_HOST} | grep -Ev "Database|information_schema|performance_schema|mysql|sys")
     for db in $db_names; do
         echo "Backing up $db database"
-        mysqldump -u${MYSQL_ROOT_USER} -p${MYSQL_ROOT_PASSWORD} -h ${MYSQL_MASTER_HOST} --triggers --routines --events --databases $db > ${TEMPDIR}/${db}.sql
+        mysqldump -u${MYSQL_ROOT_USER} -p${MYSQL_ROOT_PASSWORD} -h ${MYSQL_HOST} --triggers --routines --events --databases $db > ${TEMPDIR}/${db}.sql
     done
     echo "压缩备份的数据库文件：${BASE_NAME}-${DATE}.tar.gz ${BASE_NAME}-latest.tar.gz"
     tar -czf ${BASE_NAME}-${DATE}.tar.gz -C ${TEMPDIR} .
@@ -53,13 +53,13 @@ function restore() {
     echo "解压数据库备份文件：${REMOTE_FILE_PATH}"
     tar -xzvf ${TEMPDIR}/${FILE_NAME} -C ${TEMPDIR}/data
     echo "查询数据库中是否存在用户：${MYSQL_USER}"
-    user=$(mysql -e "select concat(User, '@', Host) as user from mysql.user where User='${MYSQL_USER}';" -u${MYSQL_ROOT_USER} -p${MYSQL_ROOT_PASSWORD} -h ${MYSQL_MASTER_HOST} | grep -v "user")
+    user=$(mysql -e "select concat(User, '@', Host) as user from mysql.user where User='${MYSQL_USER}';" -u${MYSQL_ROOT_USER} -p${MYSQL_ROOT_PASSWORD} -h ${MYSQL_HOST} | grep -v "user")
     for db in $(ls ${TEMPDIR}/data); do
         echo "Restore $db database"
-        mysql -u${MYSQL_ROOT_USER} -p${MYSQL_ROOT_PASSWORD} -h ${MYSQL_MASTER_HOST} < ${TEMPDIR}/data/${db}
+        mysql -u${MYSQL_ROOT_USER} -p${MYSQL_ROOT_PASSWORD} -h ${MYSQL_HOST} < ${TEMPDIR}/data/${db}
         if [ -n "${user}" ]; then
             echo "grant all privileges on ${db:0:-4}.* to '${MYSQL_USER}'@'%';flush privileges;"
-            mysql -u${MYSQL_ROOT_USER} -p${MYSQL_ROOT_PASSWORD} -h ${MYSQL_MASTER_HOST} -e "grant all privileges on ${db:0:-4}.* to '${MYSQL_USER}'@'%';flush privileges;"
+            mysql -u${MYSQL_ROOT_USER} -p${MYSQL_ROOT_PASSWORD} -h ${MYSQL_HOST} -e "grant all privileges on ${db:0:-4}.* to '${MYSQL_USER}'@'%';flush privileges;"
         fi
     done
     rm -rf ${TEMPDIR}
@@ -77,7 +77,7 @@ Options:
 Environment:
     MYSQL_ROOT_USER: mysql 用户名，默认为 root
     MYSQL_ROOT_PASSWORD: mysql 密码，若为 root 请留空
-    MYSQL_MASTER_HOST: mysql 地址，默认为 mysql-headless.default.svc.cluster.local
+    MYSQL_HOST: mysql 地址，默认为 mysql-headless.default.svc.cluster.local
     BASE_NAME: 备份文件名，默认为 mysql-backup
     STORAGE_PROVIDER: Rclone 存储提供商，默认为 onedrive
     STORAGE_BACKUP_PATH: Rclone 远程备份存储路径，默认为 /storages/backups/databases/k3s-common-db
