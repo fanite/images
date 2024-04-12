@@ -1,23 +1,23 @@
 #!/bin/sh
 
-MYSQL_USER=${MYSQL_USER:-"fanite"}
-MYSQL_ROOT_USER=${MYSQL_ROOT_USER:-"root"}
-MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-"root"}
-MYSQL_MASTER_HOST=${MYSQL_MASTER_HOST:-"mysql-headless.default.svc.cluster.local"}
-DATE=$(date +"%Y%m%d")
-BASE_NAME=${BASE_NAME:-"mysql-backup"}
-STORAGE_PROVIDER=${STORAGE_PROVIDER:-"onedrive"}
-STORAGE_BACKUP_PATH=${STORAGE_BACKUP_PATH:-"/storages/backups/databases/k3s-common-db"}
+export MYSQL_USER=${MYSQL_USER:-"fanite"}
+export MYSQL_ROOT_USER=${MYSQL_ROOT_USER:-"root"}
+export MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-"root"}
+export MYSQL_MASTER_HOST=${MYSQL_MASTER_HOST:-"mysql-headless.default.svc.cluster.local"}
+export BASE_NAME=${BASE_NAME:-"mysql-backup"}
+export STORAGE_PROVIDER=${STORAGE_PROVIDER:-"onedrive"}
+export STORAGE_BACKUP_PATH=${STORAGE_BACKUP_PATH:-"/storages/backups/databases/k3s-common-db"}
+export BACKUP_NUMBER_LIMIT=${BACKUP_NUMBER_LIMIT:-30}
+export RCLONE_CONFIG=${RCLONE_CONFIG:-"/workspace/config/rclone.conf"}
 REMOTE_BACKUP_PATH=${STORAGE_PROVIDER}:${STORAGE_BACKUP_PATH}
-BACKUP_NUMBER_LIMIT=${BACKUP_NUMBER_LIMIT:-30}
-RCLONE_CONFIG=${RCLONE_CONFIG:-"/workspace/config/rclone.conf"}
+DATE=$(date +"%Y%m%d")
 
 if [ -e ${RCLONE_CONFIG} ]; then
     echo "Rclone 配置文件 ${RCLONE_CONFIG} 存在"
     mkdir -p /root/.config/rclone/
     cp ${RCLONE_CONFIG} /root/.config/rclone/rclone.conf
     chmod 777 /root/.config/rclone/rclone.conf
-    RCLONE_CONFIG="/root/.config/rclone/rclone.conf"
+    export RCLONE_CONFIG="/root/.config/rclone/rclone.conf"
 else
     echo "Rclone 配置文件 ${RCLONE_CONFIG} 不存在"
     exit 1
