@@ -22,9 +22,12 @@ function backup() {
     echo "压缩备份的数据库文件：${BASE_NAME}-${DATE}.tar.gz ${BASE_NAME}-latest.tar.gz"
     tar -czf ${BASE_NAME}-${DATE}.tar.gz -C ${TEMPDIR} .
     tar -czf ${BASE_NAME}-latest.tar.gz -C ${TEMPDIR} .
+    echo "只保留最近 ${BACKUP_NUMBER_LIMIT} 个备份文件，删除其他文件"
     rclone --config ${RCLONE_CONFIG} ls ${REMOTE_BACKUP_PATH}/ | awk '{print $2}' | sort -r | tail -n +$(($BACKUP_NUMBER_LIMIT + 1)) | xargs -i -t rclone --config ${RCLONE_CONFIG} delete ${REMOTE_BACKUP_PATH}/{}
-    echo "${BASE_NAME}-${DATE}.tar.gz ${BASE_NAME}-latest.tar.gz" | xargs -n 1 echo | xargs -i -t rclone --config ${RCLONE_CONFIG} copy ${TEMPDIR}/{} ${REMOTE_BACKUP_PATH}/
+    echo "${BASE_NAME}-${DATE}.tar.gz ${BASE_NAME}-latest.tar.gz" | xargs -n 1 echo | xargs -i -t rclone --config ${RCLONE_CONFIG} copy ./{} ${REMOTE_BACKUP_PATH}/
     echo "备份完成，删除临时文件"
+    rm -rf ./${BASE_NAME}-${DATE}.tar.gz
+    rm -rf ./${BASE_NAME}-latest.tar.gz
     rm -rf ${TEMPDIR}
 }
 

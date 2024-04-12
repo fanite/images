@@ -8,6 +8,7 @@ RUN apk update && apk add --no-cache \
     rclone \
     kubectl
 RUN /sbin/setup-timezone -z $TZ
+RUN mkdir -p /root/.config/rclone/
 RUN mkdir -p /workspace/scripts
 COPY ./scripts/* /workspace/scripts/
 RUN chmod +x /workspace/scripts/*
