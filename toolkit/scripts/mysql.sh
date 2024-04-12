@@ -43,7 +43,7 @@ function restore() {
     for db in $(ls ${TEMPDIR}/data); do
         echo "Restore $db database"
         mysql -u${MYSQL_ROOT_USER} -p${MYSQL_ROOT_PASSWORD} -h ${MYSQL_MASTER_HOST} < ${TEMPDIR}/data/${db}
-        if [[ -z "${user}" ]]; then
+        if [ -n "${user}" ]; then
             echo "grant all privileges on ${db:0:-4}.* to '${MYSQL_USER}'@'%';flush privileges;"
             mysql -u${MYSQL_ROOT_USER} -p${MYSQL_ROOT_PASSWORD} -h ${MYSQL_MASTER_HOST} -e "grant all privileges on ${db:0:-4}.* to '${MYSQL_USER}'@'%';flush privileges;"
         fi
