@@ -1,5 +1,6 @@
 #!/bin/sh
 
+MYSQL_USER=${MYSQL_USER:-"fanite"}
 MYSQL_ROOT_USER=${MYSQL_ROOT_USER:-"root"}
 MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-"root"}
 MYSQL_MASTER_HOST=${MYSQL_MASTER_HOST:-"mysql-headless.default.svc.cluster.local"}
@@ -12,36 +13,44 @@ BACKUP_NUMBER_LIMIT=${BACKUP_NUMBER_LIMIT:-30}
 RCLONE_CONFIG=${RCLONE_CONFIG:-"/workspace/rclone.conf"}
 
 function backup() {
-    set -ev
     local TEMPDIR=$(mktemp -d)
     local db_names=$(mysql -e "show databases;" -u${MYSQL_ROOT_USER} -p${MYSQL_ROOT_PASSWORD} -h ${MYSQL_MASTER_HOST} | grep -Ev "Database|information_schema|performance_schema|mysql|sys")
     for db in $db_names; do
         echo "Backing up $db database"
         mysqldump -u${MYSQL_ROOT_USER} -p${MYSQL_ROOT_PASSWORD} -h ${MYSQL_MASTER_HOST} --triggers --routines --events --databases $db > ${TEMPDIR}/${db}.sql
     done
+    echo "压缩备份的数据库文件：${BASE_NAME}-${DATE}.tar.gz ${BASE_NAME}-latest.tar.gz"
     tar -czf ${BASE_NAME}-${DATE}.tar.gz -C ${TEMPDIR} .
     tar -czf ${BASE_NAME}-latest.tar.gz -C ${TEMPDIR} .
-    rclone ls ${REMOTE_BACKUP_PATH}/ | awk '{print $2}' | sort -r | tail -n +$(($BACKUP_NUMBER_LIMIT + 1)) | xargs -i -t rclone delete ${REMOTE_BACKUP_PATH}/{}
-    echo "${BASE_NAME}-${DATE}.tar.gz ${BASE_NAME}-latest.tar.gz" | xargs -n 1 echo | xargs -i -t rclone copy ${TEMPDIR}/{} ${REMOTE_BACKUP_PATH}/
+    rclone --config ${RCLONE_CONFIG} ls ${REMOTE_BACKUP_PATH}/ | awk '{print $2}' | sort -r | tail -n +$(($BACKUP_NUMBER_LIMIT + 1)) | xargs -i -t rclone --config ${RCLONE_CONFIG} delete ${REMOTE_BACKUP_PATH}/{}
+    echo "${BASE_NAME}-${DATE}.tar.gz ${BASE_NAME}-latest.tar.gz" | xargs -n 1 echo | xargs -i -t rclone --config ${RCLONE_CONFIG} copy ${TEMPDIR}/{} ${REMOTE_BACKUP_PATH}/
+    echo "备份完成，删除临时文件"
     rm -rf ${TEMPDIR}
-    set +ev
 }
 
 function restore() {
-    set -ev
     local FILE_DATE=${2:-"latest"}
     local FILE_NAME=${BASE_NAME}-${FILE_DATE}.tar.gz
     local REMOTE_FILE_PATH=${REMOTE_BACKUP_PATH}/${FILE_NAME}
     local TEMPDIR=$(mktemp -d)
-    rclone copy ${REMOTE_FILE_PATH} ${TEMPDIR}
+    echo "下载数据库备份文件：${REMOTE_FILE_PATH}"
+    rclone --config ${RCLONE_CONFIG} -P copy ${REMOTE_FILE_PATH} ${TEMPDIR}
     mkdir ${TEMPDIR}/data
-    tar -xzf ${TEMPDIR}/${FILE_NAME} -C ${TEMPDIR}/data
+    echo "解压数据库备份文件：${REMOTE_FILE_PATH}"
+    tar -xzvf ${TEMPDIR}/${FILE_NAME} -C ${TEMPDIR}/data
+    echo "查询数据库中是否存在用户：${MYSQL_USER}"
+    user=$(mysql -e "select concat(User, '@', Host) as user from mysql.user where User='${MYSQL_USER}';" -u${MYSQL_ROOT_USER} -p${MYSQL_ROOT_PASSWORD} -h ${MYSQL_MASTER_HOST} | grep -v "user")
     for db in $(ls ${TEMPDIR}/data); do
+        echo "Restore $db database"
         mysql -u${MYSQL_ROOT_USER} -p${MYSQL_ROOT_PASSWORD} -h ${MYSQL_MASTER_HOST} < ${TEMPDIR}/data/${db}
+        if [[ -z "${user}" ]]; then
+            echo "grant all privileges on ${db:0:-4}.* to '${MYSQL_USER}'@'%';flush privileges;"
+            mysql -u${MYSQL_ROOT_USER} -p${MYSQL_ROOT_PASSWORD} -h ${MYSQL_MASTER_HOST} -e "grant all privileges on ${db:0:-4}.* to '${MYSQL_USER}'@'%';flush privileges;"
+        fi
     done
     rm -rf ${TEMPDIR}
-    set +ev
 }
+
 
 function usage() {
     cat <<EOF
