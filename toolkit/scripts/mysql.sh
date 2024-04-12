@@ -10,7 +10,18 @@ STORAGE_PROVIDER=${STORAGE_PROVIDER:-"onedrive"}
 STORAGE_BACKUP_PATH=${STORAGE_BACKUP_PATH:-"/storages/backups/databases/k3s-common-db"}
 REMOTE_BACKUP_PATH=${STORAGE_PROVIDER}:${STORAGE_BACKUP_PATH}
 BACKUP_NUMBER_LIMIT=${BACKUP_NUMBER_LIMIT:-30}
-RCLONE_CONFIG=${RCLONE_CONFIG:-"/workspace/rclone.conf"}
+RCLONE_CONFIG=${RCLONE_CONFIG:-"/workspace/config/rclone.conf"}
+
+if [ -e ${RCLONE_CONFIG} ]; then
+    echo "Rclone 配置文件 ${RCLONE_CONFIG} 存在"
+    mkdir -p /root/.config/rclone/
+    cp ${RCLONE_CONFIG} /root/.config/rclone/rclone.conf
+    chmod 777 /root/.config/rclone/rclone.conf
+    RCLONE_CONFIG="/root/.config/rclone/rclone.conf"
+else
+    echo "Rclone 配置文件 ${RCLONE_CONFIG} 不存在"
+    exit 1
+fi
 
 function backup() {
     local TEMPDIR=$(mktemp -d)
@@ -71,7 +82,7 @@ Environment:
     STORAGE_PROVIDER: Rclone 存储提供商，默认为 onedrive
     STORAGE_BACKUP_PATH: Rclone 远程备份存储路径，默认为 /storages/backups/databases/k3s-common-db
     BACKUP_NUMBER_LIMIT: 备份文件数量限制，默认为 30
-    RCLONE_CONFIG: Rclone 配置文件路径，默认为 /workspace/rclone.conf
+    RCLONE_CONFIG: Rclone 配置文件路径，默认为 /workspace/config/rclone.conf
 EOF
 }
 
