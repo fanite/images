@@ -1,4 +1,4 @@
-FROM --platform=$TARGETPLATFORM alpine:edge as builder
+FROM alpine:edge as builder
 RUN set -ex \
     && apk update \
     && apk add --no-cache --virtual .build-deps alpine-conf sudo git curl libc-dev gcc g++ make
@@ -10,7 +10,7 @@ RUN git clone https://github.com/flow2000/lookbusy.git \
     && make
 RUN apk del .build-deps
 
-FROM --platform=$TARGETPLATFORM alpine:edge
+FROM alpine:edge
 RUN apk add --no-cache speedtest-cli alpine-conf
 ENV TZ Asia/Shanghai
 RUN /sbin/setup-timezone -z $TZ
