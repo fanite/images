@@ -11,7 +11,7 @@ RUN git clone https://github.com/flow2000/lookbusy.git \
 RUN apk del .build-deps
 
 FROM alpine:edge
-RUN apk add --no-cache speedtest-cli alpine-conf
+RUN apk add --no-cache speedtest-cli alpine-conf cron
 ENV TZ Asia/Shanghai
 RUN /sbin/setup-timezone -z $TZ
 COPY --from=builder /working/lookbusy/lookbusy /usr/bin/lookbusy
