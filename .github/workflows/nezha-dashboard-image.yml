@@ -82,7 +82,8 @@ jobs:
         name: Build and push
         uses: docker/build-push-action@v5
         with:
-          context: "{{defaultContext}}"
+          context: .
+          file: ./Dockerfile
           platforms: |
             linux/386
             linux/amd64
