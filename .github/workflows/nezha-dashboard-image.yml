@@ -40,7 +40,7 @@ jobs:
         name: Checkout
         uses: actions/checkout@v4
         with:
-          repository: https://github.com/naiba/nezha.git
+          repository: naiba/nezha
           ref: ${{ env.APP_VERSION }}
       -
         name: Custom Setting
