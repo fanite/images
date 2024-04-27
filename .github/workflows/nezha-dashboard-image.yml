@@ -23,7 +23,7 @@ on:
       cdn:
         description: Jsdelivr静态资源CDN
         type: string
-        default: cdn.jsdelivr.us
+        default: jsd.onmicrosoft.cn
         required: false
 
 env:
@@ -45,8 +45,8 @@ jobs:
       -
         name: Custom Setting
         run: |
-          sed -i "s|cdn.jsdelivr.net|cdn.jsdelivr.us|g" ./resource/template/theme-default/header.html
-          sed -i "s|cdn.jsdelivr.net|cdn.jsdelivr.us|g" ./resource/template/theme-server-status/header.html
+          sed -i "s|cdn.jsdelivr.net|${{ inputs.cdn }}|g" ./resource/template/theme-default/header.html
+          sed -i "s|cdn.jsdelivr.net|${{ inputs.cdn }}|g" ./resource/template/theme-server-status/header.html
       - 
         name: Xgo build
         uses: crazy-max/ghaction-xgo@v2
