@@ -16,14 +16,6 @@ WORKDIR /app
 
 FROM gcr.io/distroless/python3
 
-WORKDIR /app
-CMD ["hello.py", "/etc"]
-
-FROM gcr.io/distroless/python3
-
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
-
 COPY --from=build-env /app /app
 COPY --from=build-env /usr/bin/rclone /usr/bin/rclone
 COPY --from=build-env /usr/bin/tar /usr/bin/tar
