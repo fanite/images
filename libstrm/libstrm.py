@@ -1,9 +1,9 @@
 import os
 import time
 import logger
-import shutil
 import logging
 import tempfile
+import subprocess
 from pathlib import Path
 from utils import StrmLock, Profile, Utils
 from concurrent.futures import ThreadPoolExecutor
@@ -31,7 +31,7 @@ class LibStrm(object):
             path, filename = os.path.split(path)
             temp_dir = os.path.join(tempfile.gettempdir(), "libstrm", path)
             os.makedirs(temp_dir, exist_ok=True)
-            shutil.copy2(remote_path, temp_dir)
+            subprocess.call(f"rclone copy -P {remote_path} {temp_dir}", shell=True)
             Utils.decompress(os.path.join(temp_dir, filename), self.dest_path)
         except Exception as e:
             logging.error("back restore error: %s", e)
@@ -42,10 +42,10 @@ class LibStrm(object):
             path = self.sync.get("path")
             drive = self.sync.get("drive")
             remote_path, filename = os.path.split(path)
-            temp_file = os.path.join(tempfile.gettempdir(), "libstrm/backup", filename)
+            temp_file = Path(os.path.join(tempfile.gettempdir(), "libstrm/backup", filename))
             os.makedirs(os.path.dirname(temp_file), exist_ok=True)
             Utils.compress(self.dest_path, temp_file)
-            shutil.copy2(temp_file, f"{drive}:/{remote_path}")
+            subprocess.call(f"rclone copy -P {temp_file} {drive}:/{remote_path}", shell=True)
         except Exception as e:
             logging.error("back up error: %s", e)
             raise

@@ -4,8 +4,6 @@ import json
 import shutil
 import logging
 import tarfile
-import tempfile
-import subprocess
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
