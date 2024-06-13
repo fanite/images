@@ -72,3 +72,4 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
           repository: ${{ env.DOCKERHUB_REPO }}
           short-description: 扫描文件夹，并生成视频文件的strm文件
+          readme-filepath: ./libstrm/README.md
