@@ -14,7 +14,7 @@ COPY utils.py /app/utils.py
 
 WORKDIR /app
 
-FROM gcr.io/distroless/python3:latest
+FROM distroless/python3:latest
 
 COPY --from=build-env /app /app
 COPY --from=build-env /usr/bin/rclone /usr/bin/rclone
