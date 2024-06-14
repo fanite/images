@@ -130,5 +130,9 @@ def main():
         
 
 if __name__ == "__main__":
-    main()
+    logger.setup_logging()
+    libstrm = LibStrm()
+    libstrm.flush_all()
+    if libstrm.sync_enabled():
+        libstrm.back_up()
     
