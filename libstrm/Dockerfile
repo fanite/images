@@ -11,10 +11,7 @@ RUN apk update && apk add --no-cache \
 
 COPY . /app
 
-RUN pip install --no-cache-dir --upgrade pip
-RUN pip install --no-cache-dir --upgrade setuptools
-
 WORKDIR /app/
 
-CMD ["python3"]
+CMD ["python"]
 ENTRYPOINT ["libstrm.py"]
