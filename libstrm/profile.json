@@ -12,6 +12,7 @@
     "server": "http://192.168.56.103:5678/d",
     "source_path": "D:\\Temp\\media",
     "dest_path": "D:\\Temp\\strm",
+    "snapshot_path": "D:\\Temp\\snapshot",
     "paths": [
         {"watched": true, "source": "每日更新/动漫/其它", "include":[], "exclude":[]},
         {"watched": true, "source": "每日更新/动漫/动漫剧场版", "include":[], "exclude":[]},

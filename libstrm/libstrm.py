@@ -1,6 +1,7 @@
 import os
 import time
 import logger
+import shutil
 import logging
 import tempfile
 import subprocess
@@ -17,6 +18,7 @@ class LibStrm(object):
         self.paths = self.profile.get("paths")
         self.formats = self.profile.get("formats")
         self.dest_path = self.profile.get("dest_path")
+        self.snapshot_path = self.profile.get("snapshot_path")
         self.source_path = self.profile.get("source_path")
         self.is_win = Utils.is_nt()
     
@@ -59,16 +61,24 @@ class LibStrm(object):
             # 去除路径每个部分中的两边的空格和不合法的字符
             parts = tuple([part_name.strip().translate(self.translation_table) for part_name in parts])
             strm_file = os.path.join(self.dest_path, *parts)
-            if os.path.exists(strm_file):
+            snapshot_file = os.path.join(self.snapshot_path, *parts)
+            # 只判断快照中是否存在该文件
+            if os.path.exists(snapshot_file):
                 logging.warning(f"{strm_file} already exists")
                 return
             dir = os.path.dirname(strm_file)
+            snapshot_dir = os.path.dirname(snapshot_file)
             if not os.path.exists(dir):
                 os.makedirs(dir, exist_ok=False)
+            if not os.path.exists(snapshot_dir):
+                os.makedirs(snapshot_dir, exist_ok=False)
             if self.is_win:
                 strm_file = '\\\\?\\'+strm_file
+                snapshot_file = '\\\\?\\'+snapshot_file
             with open(strm_file, "w+", encoding="utf-8") as f:
                 f.write(video_url)
+            with open(snapshot_file, "w+", encoding="utf-8") as f:
+                f.write("")
             logging.info("create %s success" % str(strm_file).lstrip("\\\\?\\"))
         except Exception as e:
             logging.error("create strm error: %s", e)
@@ -98,7 +108,19 @@ class LibStrm(object):
             return
         logging.info(f"scan {source_path} done, cost: {time.time() - start_time}s")
 
+    def clean_dest_dir(self):
+        logging.info(f"clean dest dir {self.dest_path} start.")
+        try:
+            dest = Path(self.dest_path)
+            if dest.exists():
+                shutil.rmtree(dest)
+        except Exception as e:
+            logging.error(f"failed to clean dest dir {self.dest_path}, error: {e}")
+            return
+        logging.info(f"clean dest dir {self.dest_path} done.")
+
     def flush_all(self, paths = []):
+        self.clean_dest_dir()
         paths = paths or self.paths
         start_time = time.time()
         try:
@@ -130,7 +152,9 @@ def main():
         
 
 if __name__ == "__main__":
-    logger.setup_logging()
+    profile = Profile(os.environ.get("LIBSTRM_PROFILE", "profile.json"))
+    libstrm_log = os.path.join(os.path.dirname(profile.get("dest_path")), "libstrm.log")
+    logger.setup_logging(libstrm_log)
     libstrm = LibStrm()
     libstrm.flush_all()
     if libstrm.sync_enabled():
