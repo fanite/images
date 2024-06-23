@@ -7,7 +7,8 @@ RUN apt-get update && apt-get install -y \
 FROM amilys/embyserver_arm64v8:4.8.7.0
 
 COPY --from=base /usr/bin/fuse /usr/bin/fuse
-COPY --from=base /dev/fuse /dev/fuse
+# COPY --from=base /dev/fuse /dev/fuse
+COPY --from=base /etc/fuse.conf /etc/fuse.conf
 COPY --from=base /usr/bin/fusermount /usr/bin/fusermount
 COPY --from=base /usr/bin/rclone /usr/bin/rclone
 
