@@ -10,7 +10,7 @@ from utils import StrmLock, Profile, Utils
 from concurrent.futures import ThreadPoolExecutor
 
 class LibStrm(object):
-    translation_table = str.maketrans({"\\":"_", "/":"_", ":":"_", "*": "_", "?": "_", "\"": "'", "<": "(", ">": ")", "|": "_","\t": ""})
+    translation_table = str.maketrans({"\\":"_", "/":"_", ":":"_", "*": "_", "?": "_", "\"": "'", "<": "(", ">": ")", "|": "_","\t": "","‛":""})
     def __init__(self):
         self.profile = Profile(os.environ.get("LIBSTRM_PROFILE", "profile.json"))
         self.server = os.environ.get("LIBSTRM_SERVER", self.profile.get("server"))

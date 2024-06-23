@@ -1,0 +1,1 @@
+https://hub.docker.com/r/amilys/embyserver_arm64v8

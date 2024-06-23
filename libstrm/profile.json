@@ -1,6 +1,6 @@
 {
     "sync": {
-        "enable": true,
+        "enabled": true,
         "drive": "onedrive",
         "path": "storages/backups/xiaoya_strm.tar.gz"
     },
