@@ -25,10 +25,10 @@ fi
 
 function backup() {
     local TEMPDIR=$(mktemp -d)
-    local db_names=$(mysql -e "show databases;" -u${MYSQL_ROOT_USER} -p${MYSQL_ROOT_PASSWORD} -h ${MYSQL_HOST} | grep -Ev "Database|information_schema|performance_schema|mysql|sys")
+    local db_names=$(mysql -e "show databases;" -u${MYSQL_ROOT_USER} -p${MYSQL_ROOT_PASSWORD} -h ${MYSQL_HOST} --ssl=false | grep -Ev "Database|information_schema|performance_schema|mysql|sys")
     for db in $db_names; do
         echo "Backing up $db database"
-        mysqldump -u${MYSQL_ROOT_USER} -p${MYSQL_ROOT_PASSWORD} -h ${MYSQL_HOST} --triggers --routines --events --databases $db > ${TEMPDIR}/${db}.sql
+        mysqldump -u${MYSQL_ROOT_USER} -p${MYSQL_ROOT_PASSWORD} -h ${MYSQL_HOST} --triggers --routines --events --databases $db --ssl=false > ${TEMPDIR}/${db}.sql
     done
     echo "压缩备份的数据库文件：${BASE_NAME}-${DATE}.tar.gz ${BASE_NAME}-latest.tar.gz"
     tar -czf ${BASE_NAME}-${DATE}.tar.gz -C ${TEMPDIR} .
@@ -53,13 +53,13 @@ function restore() {
     echo "解压数据库备份文件：${REMOTE_FILE_PATH}"
     tar -xzvf ${TEMPDIR}/${FILE_NAME} -C ${TEMPDIR}/data
     echo "查询数据库中是否存在用户：${MYSQL_USER}"
-    user=$(mysql -e "select concat(User, '@', Host) as user from mysql.user where User='${MYSQL_USER}';" -u${MYSQL_ROOT_USER} -p${MYSQL_ROOT_PASSWORD} -h ${MYSQL_HOST} | grep -v "user")
+    user=$(mysql -e "select concat(User, '@', Host) as user from mysql.user where User='${MYSQL_USER}';" -u${MYSQL_ROOT_USER} -p${MYSQL_ROOT_PASSWORD} -h ${MYSQL_HOST} --ssl=false | grep -v "user")
     for db in $(ls ${TEMPDIR}/data); do
         echo "Restore $db database"
-        mysql -u${MYSQL_ROOT_USER} -p${MYSQL_ROOT_PASSWORD} -h ${MYSQL_HOST} < ${TEMPDIR}/data/${db}
+        mysql -u${MYSQL_ROOT_USER} -p${MYSQL_ROOT_PASSWORD} -h ${MYSQL_HOST} --ssl=false < ${TEMPDIR}/data/${db}
         if [ -n "${user}" ]; then
             echo "grant all privileges on ${db:0:-4}.* to '${MYSQL_USER}'@'%';flush privileges;"
-            mysql -u${MYSQL_ROOT_USER} -p${MYSQL_ROOT_PASSWORD} -h ${MYSQL_HOST} -e "grant all privileges on ${db:0:-4}.* to '${MYSQL_USER}'@'%';flush privileges;"
+            mysql -u${MYSQL_ROOT_USER} -p${MYSQL_ROOT_PASSWORD} -h ${MYSQL_HOST} -e "grant all privileges on ${db:0:-4}.* to '${MYSQL_USER}'@'%';flush privileges;" --ssl=false
         fi
     done
     rm -rf ${TEMPDIR}
