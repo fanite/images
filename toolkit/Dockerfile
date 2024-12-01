@@ -7,7 +7,7 @@ RUN apk update && apk add --no-cache \
     mysql-client \
     rclone \
     kubectl
-RUN /sbin/setup-timezone -z $TZ
+RUN setup-timezone -z $TZ
 RUN mkdir -p /root/.config/rclone/
 RUN mkdir -p /workspace/scripts
 COPY ./scripts/* /workspace/scripts/
