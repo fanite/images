@@ -2,6 +2,7 @@ FROM alpine:edge
 ENV TZ Asia/Shanghai
 RUN apk update && apk add --no-cache \
     alpine-conf \
+    zip \
     unzip \
     tar \
     mysql-client \
